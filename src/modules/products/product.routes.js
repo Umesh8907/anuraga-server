@@ -6,9 +6,11 @@ import {
     createProduct,
     updateProduct,
     deleteProduct,
-    searchProducts
+    searchProducts,
+    bulkUpdateStock
 } from "./product.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
+import adminMiddleware from "../../middlewares/admin.middleware.js";
 
 const router = Router();
 
@@ -121,7 +123,7 @@ router.get("/by-collection/:slug", getProductsByCollectionSlug);
  *       201:
  *         description: Product created
  */
-router.post("/", authMiddleware, createProduct);
+router.post("/", authMiddleware, adminMiddleware, createProduct);
 
 /**
  * @openapi
@@ -150,7 +152,7 @@ router.post("/", authMiddleware, createProduct);
  *       404:
  *         description: Product not found
  */
-router.put("/:id", authMiddleware, updateProduct);
+router.put("/:id", authMiddleware, adminMiddleware, updateProduct);
 
 /**
  * @openapi
@@ -173,6 +175,17 @@ router.put("/:id", authMiddleware, updateProduct);
  *       404:
  *         description: Product not found
  */
-router.delete("/:id", authMiddleware, deleteProduct);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
+
+/**
+ * @openapi
+ * /products/bulk-stock:
+ *   patch:
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Bulk update stock (Admin)
+ */
+router.patch("/bulk-stock", authMiddleware, adminMiddleware, bulkUpdateStock);
 
 export default router;

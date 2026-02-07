@@ -7,6 +7,7 @@ import {
     updateOrderStatus
 } from "./order.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
+import adminMiddleware from "../../middlewares/admin.middleware.js";
 
 const router = Router();
 
@@ -64,7 +65,7 @@ router.get("/", getMyOrders);
  *       200:
  *         description: List of all orders
  */
-router.get("/admin/all", getAllOrders);
+router.get("/admin/all", adminMiddleware, getAllOrders);
 
 /**
  * @openapi
@@ -119,6 +120,6 @@ router.get("/:id", getOrderById);
  *       200:
  *         description: Status updated
  */
-router.patch("/:id/status", updateOrderStatus);
+router.patch("/:id/status", adminMiddleware, updateOrderStatus);
 
 export default router;

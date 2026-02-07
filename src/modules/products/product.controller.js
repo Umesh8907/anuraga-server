@@ -58,11 +58,25 @@ export const getProductsByCollectionSlug = async (req, res, next) => {
 
 export const getAllProducts = async (req, res, next) => {
     try {
-        const products = await productService.getAllProducts();
+        const result = await productService.getAllProducts(req.query);
 
         res.status(200).json({
             success: true,
-            data: products
+            data: result.products,
+            pagination: result.pagination
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const bulkUpdateStock = async (req, res, next) => {
+    try {
+        const { items } = req.body; // Expects { items: [{ variantId, quantity }] }
+        await productService.bulkUpdateStock(items);
+        res.status(200).json({
+            success: true,
+            message: "Stock updated successfully"
         });
     } catch (error) {
         next(error);
