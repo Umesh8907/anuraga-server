@@ -106,10 +106,50 @@ const clearCart = async (userId) => {
     return cart;
 };
 
+const syncCart = async (userId, items) => {
+    const cart = await getCartByUser(userId);
+
+    for (const item of items) {
+        try {
+            const product = await Product.findById(item.productId);
+            if (!product) continue;
+
+            const variant = product.variants.find(
+                v => v._id.toString() === item.variantId.toString()
+            );
+            if (!variant) continue;
+
+            const existing = cart.items.find(
+                i => i.product.toString() === item.productId && i.variantId.toString() === item.variantId
+            );
+
+            if (existing) {
+                // Keep the larger quantity or sum them?
+                // Summing is usually better for UX
+                existing.quantity = Math.min(existing.quantity + item.quantity, variant.stock);
+            } else {
+                cart.items.push({
+                    product: product._id,
+                    variantId: variant._id,
+                    variantLabel: variant.label,
+                    price: variant.price,
+                    quantity: Math.min(item.quantity, variant.stock)
+                });
+            }
+        } catch (err) {
+            console.error(`Sync error for product ${item.productId}:`, err);
+        }
+    }
+
+    await cart.save();
+    return Cart.findById(cart._id).populate('items.product');
+};
+
 export default {
     getCartByUser,
     addToCart,
     updateCartItem,
     removeCartItem,
-    clearCart
+    clearCart,
+    syncCart
 };

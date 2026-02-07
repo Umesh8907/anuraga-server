@@ -57,3 +57,13 @@ export const removeCartItem = async (req, res, next) => {
         next(error);
     }
 };
+
+export const syncCart = async (req, res, next) => {
+    try {
+        const { items } = req.body;
+        const cart = await cartService.syncCart(req.user.id, items);
+        res.status(200).json({ success: true, data: cart });
+    } catch (error) {
+        next(error);
+    }
+};

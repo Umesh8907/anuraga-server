@@ -3,7 +3,8 @@ import {
     getCart,
     addItemToCart,
     updateCartItem,
-    removeCartItem
+    removeCartItem,
+    syncCart
 } from "./cart.controller.js";
 
 import authMiddleware from "../../middlewares/auth.middleware.js";
@@ -101,5 +102,6 @@ router.post("/", addItemToCart);
  */
 router.put("/:cartItemId", updateCartItem);
 router.delete("/:cartItemId", removeCartItem);
+router.post("/sync", syncCart);
 
 export default router;
