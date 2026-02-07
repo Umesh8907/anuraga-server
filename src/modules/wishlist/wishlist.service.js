@@ -3,7 +3,7 @@ import Wishlist from "./wishlist.model.js";
 const getWishlist = async (userId) => {
     let wishlist = await Wishlist.findOne({ user: userId }).populate(
         "products",
-        "name price images slug"
+        "name variants images slug"
     );
 
     if (!wishlist) {
