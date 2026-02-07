@@ -7,6 +7,7 @@ import {
     deleteCollection
 } from "./collection.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
+import adminMiddleware from "../../middlewares/admin.middleware.js";
 
 const router = Router();
 
@@ -73,7 +74,7 @@ router.get("/:slug", getCollectionBySlug);
  *       201:
  *         description: Collection created
  */
-router.post("/", authMiddleware, createCollection);
+router.post("/", authMiddleware, adminMiddleware, createCollection);
 
 /**
  * @openapi
@@ -100,7 +101,7 @@ router.post("/", authMiddleware, createCollection);
  *       200:
  *         description: Collection updated
  */
-router.put("/:id", authMiddleware, updateCollection);
+router.put("/:id", authMiddleware, adminMiddleware, updateCollection);
 
 /**
  * @openapi
@@ -121,6 +122,6 @@ router.put("/:id", authMiddleware, updateCollection);
  *       200:
  *         description: Collection deleted
  */
-router.delete("/:id", authMiddleware, deleteCollection);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteCollection);
 
 export default router;

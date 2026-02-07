@@ -7,7 +7,8 @@ import {
     updateProduct,
     deleteProduct,
     searchProducts,
-    bulkUpdateStock
+    bulkUpdateStock,
+    getProductById
 } from "./product.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import adminMiddleware from "../../middlewares/admin.middleware.js";
@@ -153,6 +154,15 @@ router.post("/", authMiddleware, adminMiddleware, createProduct);
  *         description: Product not found
  */
 router.put("/:id", authMiddleware, adminMiddleware, updateProduct);
+
+/**
+ * @openapi
+ * /products/id/{id}:
+ *   get:
+ *     tags: [Products]
+ *     description: Get product by ID
+ */
+router.get("/id/:id", getProductById);
 
 /**
  * @openapi

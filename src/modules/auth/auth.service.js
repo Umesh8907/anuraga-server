@@ -26,23 +26,24 @@ const generateRefreshToken = () => {
 
 /* ---------- core ---------- */
 
-const register = async ({ phone, password, name }) => {
-    const exists = await User.findOne({ phone });
-    if (exists) throw new AppError(400, "Phone already registered");
+const register = async ({ phone, password, name, role = "USER" }) => {
+    const exists = await User.findOne({ phone, role });
+    if (exists) throw new AppError(400, `Phone already registered as ${role}`);
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
         phone,
         passwordHash,
-        name
+        name,
+        role
     });
 
     return issueTokens(user);
 };
 
-const login = async ({ phone, password }) => {
-    const user = await User.findOne({ phone });
+const login = async ({ phone, password, role = "USER" }) => {
+    const user = await User.findOne({ phone, role });
     if (!user) throw new AppError(401, "Invalid credentials");
 
     const match = await bcrypt.compare(password, user.passwordHash);
@@ -68,7 +69,8 @@ const issueTokens = async (user) => {
         user: {
             id: user._id,
             phone: user.phone,
-            name: user.name
+            name: user.name,
+            role: user.role
         }
     };
 };

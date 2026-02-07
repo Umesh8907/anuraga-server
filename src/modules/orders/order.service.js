@@ -1,6 +1,7 @@
 import Order from "./order.model.js";
 import cartService from "../cart/cart.service.js";
 import Product from "../products/product.model.js";
+import inventoryService from "../inventory/inventory.service.js";
 
 export const createOrder = async (userId, orderData) => {
     // 1. Get user's cart
@@ -46,12 +47,22 @@ export const createOrder = async (userId, orderData) => {
     // 3. Calculate total amount
     const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
 
+    // Sanitize shipping address
+    const { _id, isDefault, ...shippingDetails } = orderData.shippingAddress;
+
     // 4. Create Order
     const order = new Order({
         user: userId,
         items: orderItems,
         totalAmount,
-        shippingAddress: orderData.shippingAddress,
+        shippingAddress: {
+            name: shippingDetails.name,
+            phone: shippingDetails.phone,
+            addressLine1: shippingDetails.addressLine1,
+            city: shippingDetails.city,
+            state: shippingDetails.state,
+            pincode: shippingDetails.pincode
+        },
         paymentMethod: orderData.paymentMethod,
         history: [
             {
@@ -64,8 +75,22 @@ export const createOrder = async (userId, orderData) => {
 
     await order.save(); // Save order first
 
-    // 5. Decrement Stock
+    // 5. Decrement Stock and Log Transactions
     await Product.bulkWrite(bulkEnvOperations);
+
+    // Log Inventory Transactions
+    for (const item of orderItems) {
+        await inventoryService.logTransaction({
+            product: item.product,
+            variantId: item.variant,
+            variantLabel: item.name,
+            type: "OUT",
+            quantity: item.quantity,
+            reason: `Order #${order._id}`,
+            referenceId: order._id.toString(),
+            performedBy: userId
+        });
+    }
 
     // 6. Clear Cart
     await cartService.clearCart(userId);

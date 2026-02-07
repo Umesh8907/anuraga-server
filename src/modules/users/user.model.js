@@ -34,7 +34,6 @@ const userSchema = new mongoose.Schema(
         phone: {
             type: String,
             required: true,
-            unique: true,
             index: true
         },
 
@@ -65,6 +64,8 @@ const userSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+userSchema.index({ phone: 1, role: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
 
