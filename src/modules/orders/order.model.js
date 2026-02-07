@@ -61,7 +61,14 @@ const orderSchema = new mongoose.Schema(
         },
         transactionId: {
             type: String // For online payments
-        }
+        },
+        history: [
+            {
+                status: { type: String, required: true },
+                note: { type: String },
+                timestamp: { type: Date, default: Date.now }
+            }
+        ]
     },
     { timestamps: true }
 );

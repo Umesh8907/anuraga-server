@@ -52,7 +52,14 @@ export const createOrder = async (userId, orderData) => {
         items: orderItems,
         totalAmount,
         shippingAddress: orderData.shippingAddress,
-        paymentMethod: orderData.paymentMethod
+        paymentMethod: orderData.paymentMethod,
+        history: [
+            {
+                status: "PENDING",
+                note: "Order Placed",
+                timestamp: new Date()
+            }
+        ]
     });
 
     await order.save(); // Save order first
@@ -95,10 +102,16 @@ export const getAllOrders = async (query = {}) => {
     };
 };
 
-export const updateOrderStatus = async (orderId, status) => {
-    return await Order.findByIdAndUpdate(
-        orderId,
-        { orderStatus: status },
-        { new: true }
-    );
+export const updateOrderStatus = async (orderId, status, note = "") => {
+    const order = await Order.findById(orderId);
+    if (!order) throw new Error("Order not found");
+
+    order.orderStatus = status;
+    order.history.push({
+        status,
+        note,
+        timestamp: new Date()
+    });
+
+    return await order.save();
 };

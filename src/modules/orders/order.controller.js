@@ -46,8 +46,8 @@ export const getAllOrders = async (req, res, next) => {
 export const updateOrderStatus = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
-        const order = await orderService.updateOrderStatus(id, status);
+        const { status, note } = req.body; // Allow optional note
+        const order = await orderService.updateOrderStatus(id, status, note);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }

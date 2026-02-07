@@ -4,6 +4,7 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import limitMiddleware from "../middlewares/rateLimit.middleware.js";
 
 import env from "../config/env.js";
 
@@ -13,6 +14,9 @@ const expressLoader = (app) => {
 
     // Enable gzip compression
     app.use(compression());
+
+    // Rate Limiting
+    app.use(limitMiddleware);
 
     // JSON & URL encoded body parsing
     app.use(express.json({ limit: "10kb" }));

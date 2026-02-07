@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../users/user.model.js";
 import env from "../../config/env.js";
+import AppError from "../../utils/AppError.js";
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_DAYS = 30;
@@ -27,7 +28,7 @@ const generateRefreshToken = () => {
 
 const register = async ({ phone, password, name }) => {
     const exists = await User.findOne({ phone });
-    if (exists) throw new Error("Phone already registered");
+    if (exists) throw new AppError(400, "Phone already registered");
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -42,10 +43,10 @@ const register = async ({ phone, password, name }) => {
 
 const login = async ({ phone, password }) => {
     const user = await User.findOne({ phone });
-    if (!user) throw new Error("Invalid credentials");
+    if (!user) throw new AppError(401, "Invalid credentials");
 
     const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match) throw new Error("Invalid credentials");
+    if (!match) throw new AppError(401, "Invalid credentials");
 
     return issueTokens(user);
 };
@@ -101,7 +102,7 @@ const refresh = async (refreshToken) => {
         }
     }
 
-    throw new Error("Invalid refresh token");
+    throw new AppError(401, "Invalid refresh token");
 };
 
 const logout = async (userId, refreshToken) => {
@@ -121,7 +122,7 @@ const forgotPassword = async (email) => {
     const user = await User.findOne({ email }); // Changed from phone to email for password reset
     if (!user) {
         // for security, maybe don't reveal user existence, but for now throwing error
-        throw new Error("No user found with this email");
+        throw new AppError(404, "No user found with this email");
     }
 
     // Generate token
@@ -154,7 +155,7 @@ const resetPassword = async (resetToken, newPassword) => {
     });
 
     if (!user) {
-        throw new Error("Invalid or expired token");
+        throw new AppError(400, "Invalid or expired token");
     }
 
     // Set new password

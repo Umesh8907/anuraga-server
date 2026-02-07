@@ -22,6 +22,20 @@ export const verifyRazorpayPayment = async (req, res, next) => {
             orderId
         } = req.body;
 
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required payment details"
+            });
+        }
+
+        if (!orderId) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing order ID"
+            });
+        }
+
         const result = await paymentService.verifyRazorpayPayment(
             razorpay_order_id,
             razorpay_payment_id,
