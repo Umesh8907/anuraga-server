@@ -2,10 +2,11 @@ import Cart from "./cart.model.js";
 import Product from "../products/product.model.js";
 
 const getCartByUser = async (userId) => {
-    let cart = await Cart.findOne({ user: userId });
+    let cart = await Cart.findOne({ user: userId }).populate('items.product');
 
     if (!cart) {
         cart = await Cart.create({ user: userId, items: [] });
+        // No need to populate empty array
     }
 
     return cart;
@@ -32,9 +33,11 @@ const addToCart = async ({ userId, productId, variantId, quantity }) => {
     const cart = await getCartByUser(userId);
 
     const existing = cart.items.find(
-        i =>
-            i.product.toString() === productId &&
-            i.variantId.toString() === variantId
+        i => {
+            const pId = i.product._id?.toString() || i.product.toString();
+            const vId = i.variantId.toString();
+            return pId === productId && vId === variantId;
+        }
     );
 
     if (existing) {
@@ -53,14 +56,16 @@ const addToCart = async ({ userId, productId, variantId, quantity }) => {
     }
 
     await cart.save();
-    return cart;
+    return Cart.findById(cart._id).populate('items.product');
 };
 
 const updateCartItem = async ({ userId, cartItemId, quantity }) => {
-    const cart = await getCartByUser(userId);
-    const item = cart.items.id(cartItemId);
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) throw new Error("Cart not found");
 
+    const item = cart.items.id(cartItemId);
     if (!item) throw new Error("Cart item not found");
+
     if (quantity < 1) throw new Error("Quantity must be at least 1");
 
     // Check stock availability
@@ -78,22 +83,24 @@ const updateCartItem = async ({ userId, cartItemId, quantity }) => {
 
     item.quantity = quantity;
     await cart.save();
-    return cart;
+    return Cart.findById(cart._id).populate('items.product');
 };
 
 const removeCartItem = async ({ userId, cartItemId }) => {
-    const cart = await getCartByUser(userId);
-    const item = cart.items.id(cartItemId);
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) throw new Error("Cart not found");
 
+    const item = cart.items.id(cartItemId);
     if (!item) throw new Error("Cart item not found");
 
-    item.remove();
+    cart.items.pull(cartItemId);
     await cart.save();
-    return cart;
+    return Cart.findById(cart._id).populate('items.product');
 };
 
 const clearCart = async (userId) => {
-    const cart = await getCartByUser(userId);
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) return null;
     cart.items = [];
     await cart.save();
     return cart;

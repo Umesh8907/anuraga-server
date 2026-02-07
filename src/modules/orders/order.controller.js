@@ -3,7 +3,7 @@ import * as orderService from "./order.service.js";
 export const createOrder = async (req, res, next) => {
     try {
         const order = await orderService.createOrder(req.user._id, req.body);
-        res.status(201).json(order);
+        res.status(201).json({ success: true, data: order });
     } catch (error) {
         next(error);
     }
@@ -12,7 +12,7 @@ export const createOrder = async (req, res, next) => {
 export const getMyOrders = async (req, res, next) => {
     try {
         const orders = await orderService.getOrdersByUser(req.user._id);
-        res.json(orders);
+        res.json({ success: true, data: orders });
     } catch (error) {
         next(error);
     }
@@ -28,7 +28,7 @@ export const getOrderById = async (req, res, next) => {
         if (order.user.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "Not authorized" });
         }
-        res.json(order);
+        res.json({ success: true, data: order });
     } catch (error) {
         next(error);
     }
@@ -37,7 +37,7 @@ export const getOrderById = async (req, res, next) => {
 export const getAllOrders = async (req, res, next) => {
     try {
         const result = await orderService.getAllOrders(req.query);
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (error) {
         next(error);
     }
@@ -51,7 +51,7 @@ export const updateOrderStatus = async (req, res, next) => {
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
-        res.json(order);
+        res.json({ success: true, data: order });
     } catch (error) {
         next(error);
     }
