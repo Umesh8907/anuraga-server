@@ -1,7 +1,7 @@
 import env from "../config/env.js";
 import AppError from "../utils/AppError.js";
 
-const errorMiddleware = (err, req, res, next) => {
+const errorMiddleware = (err, req, res, _next) => {
     let statusCode = err.statusCode || 500;
     let message = err.message || "Internal Server Error";
 
