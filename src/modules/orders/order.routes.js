@@ -4,7 +4,8 @@ import {
     getMyOrders,
     getOrderById,
     getAllOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    cancelOrder
 } from "./order.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import adminMiddleware from "../../middlewares/admin.middleware.js";
@@ -121,5 +122,34 @@ router.get("/:id", getOrderById);
  *         description: Status updated
  */
 router.patch("/:id/status", adminMiddleware, updateOrderStatus);
+
+/**
+ * @openapi
+ * /orders/{id}/cancel:
+ *   post:
+ *     tags:
+ *       - Orders
+ *     security:
+ *       - bearerAuth: []
+ *     description: Cancel an order and restore stock
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Order cancelled
+ */
+router.post("/:id/cancel", cancelOrder);
 
 export default router;

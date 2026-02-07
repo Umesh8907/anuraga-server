@@ -2,6 +2,7 @@ import Cart from "./cart.model.js";
 import Product from "../products/product.model.js";
 
 const getCartByUser = async (userId) => {
+    console.log("DEBUG: CartService getCartByUser - userId:", userId);
     let cart = await Cart.findOne({ user: userId }).populate('items.product');
 
     if (!cart) {

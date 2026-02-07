@@ -2,6 +2,8 @@ import * as orderService from "./order.service.js";
 
 export const createOrder = async (req, res, next) => {
     try {
+        console.log("DEBUG: Controller createOrder - req.user:", req.user);
+        console.log("DEBUG: Controller createOrder - req.body:", req.body);
         const order = await orderService.createOrder(req.user.id, req.body);
         res.status(201).json({ success: true, data: order });
     } catch (error) {
@@ -52,6 +54,27 @@ export const updateOrderStatus = async (req, res, next) => {
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
+        res.json({ success: true, data: order });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const cancelOrder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        // Security: Ensure user owns the order
+        const existingOrder = await orderService.getOrderById(id);
+        if (!existingOrder) return res.status(404).json({ message: "Order not found" });
+
+        // Assuming req.user is populated by auth middleware
+        if (existingOrder.user._id.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized" });
+        }
+
+        const order = await orderService.cancelOrder(id, reason);
         res.json({ success: true, data: order });
     } catch (error) {
         next(error);

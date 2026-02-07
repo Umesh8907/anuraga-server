@@ -4,6 +4,7 @@ import Product from "../products/product.model.js";
 import inventoryService from "../inventory/inventory.service.js";
 
 export const createOrder = async (userId, orderData) => {
+    console.log("DEBUG: Service createOrder - userId:", userId);
     // 1. Get user's cart
     const cart = await cartService.getCartByUser(userId);
 
@@ -135,6 +136,50 @@ export const updateOrderStatus = async (orderId, status, note = "") => {
     order.history.push({
         status,
         note,
+        timestamp: new Date()
+    });
+
+    return await order.save();
+};
+
+export const cancelOrder = async (orderId, reason = "Cancelled") => {
+    const order = await Order.findById(orderId);
+    if (!order) throw new Error("Order not found");
+
+    if (order.orderStatus === "CANCELLED" || order.paymentStatus === "PAID") {
+        throw new Error("Order cannot be cancelled");
+    }
+
+    // 1. Restore Stock
+    const bulkEnvOperations = [];
+    for (const item of order.items) {
+        bulkEnvOperations.push({
+            updateOne: {
+                filter: { _id: item.product, "variants._id": item.variant },
+                update: { $inc: { "variants.$.stock": item.quantity } }
+            }
+        });
+
+        // Log Inventory Transaction (IN)
+        await inventoryService.logTransaction({
+            product: item.product,
+            variantId: item.variant,
+            variantLabel: item.name,
+            type: "IN",
+            quantity: item.quantity,
+            reason: `Order Cancellation #${order._id}`,
+            referenceId: order._id.toString(),
+            performedBy: order.user
+        });
+    }
+
+    await Product.bulkWrite(bulkEnvOperations);
+
+    // 2. Update Order Status
+    order.orderStatus = "CANCELLED";
+    order.history.push({
+        status: "CANCELLED",
+        note: reason,
         timestamp: new Date()
     });
 

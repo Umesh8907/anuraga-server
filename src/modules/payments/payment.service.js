@@ -28,7 +28,8 @@ export const createRazorpayOrder = async (orderId) => {
     const options = {
         amount: Math.round(order.totalAmount * 100), // amount in paisa
         currency: "INR",
-        receipt: `receipt_order_${orderId}`
+        receipt: `receipt_order_${orderId}`,
+        payment_capture: 1 // Auto-capture payment on success
     };
 
     const razorpayOrder = await razorpay.orders.create(options);
@@ -57,6 +58,12 @@ export const verifyRazorpayPayment = async (
     razorpaySignature,
     orderId
 ) => {
+    // Idempotency Check: If order is already paid, return success immediately
+    const existingOrder = await Order.findById(orderId);
+    if (existingOrder && existingOrder.paymentStatus === "PAID") {
+        return { success: true, message: "Payment already verified", order: existingOrder };
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
