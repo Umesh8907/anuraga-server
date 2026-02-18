@@ -16,7 +16,7 @@ const getProductsByCollection = async (collectionId) => {
     return Product.find({
         collections: collectionId,
         isActive: true
-    });
+    }).populate("collections", "name slug");
 };
 
 import slugify from "slugify";
