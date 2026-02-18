@@ -43,6 +43,23 @@ export const updateCartItem = async (req, res, next) => {
     }
 };
 
+export const updateCartItemVariant = async (req, res, next) => {
+    try {
+        const { cartItemId } = req.params;
+        const { newVariantId } = req.body;
+
+        const cart = await cartService.updateCartItemVariant({
+            userId: req.user.id,
+            cartItemId,
+            newVariantId
+        });
+
+        res.status(200).json({ success: true, data: cart });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const removeCartItem = async (req, res, next) => {
     try {
         const { cartItemId } = req.params;

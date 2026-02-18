@@ -87,6 +87,55 @@ const updateCartItem = async ({ userId, cartItemId, quantity }) => {
     return Cart.findById(cart._id).populate('items.product');
 };
 
+const updateCartItemVariant = async ({ userId, cartItemId, newVariantId }) => {
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) throw new Error("Cart not found");
+
+    const itemIndex = cart.items.findIndex(i => i._id.toString() === cartItemId);
+    const item = cart.items[itemIndex];
+    if (!item) throw new Error("Cart item not found");
+
+    const product = await Product.findById(item.product);
+    if (!product) throw new Error("Product not found");
+
+    const newVariant = product.variants.find(
+        v => v._id.toString() === newVariantId
+    );
+    if (!newVariant) throw new Error("Variant not found");
+
+    // Check if another item with the *new* variant already exists
+    const existingTargetIndex = cart.items.findIndex(
+        i => i.product.toString() === item.product.toString() &&
+            i.variantId.toString() === newVariantId &&
+            i._id.toString() !== cartItemId
+    );
+
+    if (existingTargetIndex > -1) {
+        // MERGE: Add current quantity to target item, remove current item
+        const targetItem = cart.items[existingTargetIndex];
+        const newQuantity = targetItem.quantity + item.quantity;
+
+        if (newQuantity > newVariant.stock) {
+            throw new Error(`Insufficient stock. Only ${newVariant.stock} available.`);
+        }
+
+        targetItem.quantity = newQuantity;
+        cart.items.splice(itemIndex, 1); // Remove the old item
+    } else {
+        // UPDATE: Just change the variant details
+        if (item.quantity > newVariant.stock) {
+            throw new Error(`Insufficient stock. Only ${newVariant.stock} available.`);
+        }
+
+        item.variantId = newVariant._id;
+        item.variantLabel = newVariant.label;
+        item.price = newVariant.price;
+    }
+
+    await cart.save();
+    return Cart.findById(cart._id).populate('items.product');
+};
+
 const removeCartItem = async ({ userId, cartItemId }) => {
     const cart = await Cart.findOne({ user: userId });
     if (!cart) throw new Error("Cart not found");
@@ -150,6 +199,8 @@ export default {
     getCartByUser,
     addToCart,
     updateCartItem,
+    updateCartItemVariant,
+    removeCartItem,
     removeCartItem,
     clearCart,
     syncCart

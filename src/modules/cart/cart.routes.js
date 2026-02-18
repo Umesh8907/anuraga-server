@@ -3,6 +3,7 @@ import {
     getCart,
     addItemToCart,
     updateCartItem,
+    updateCartItemVariant,
     removeCartItem,
     syncCart
 } from "./cart.controller.js";
@@ -101,6 +102,7 @@ router.post("/", addItemToCart);
  *         description: Item removed
  */
 router.put("/:cartItemId", updateCartItem);
+router.put("/:cartItemId/variant", updateCartItemVariant);
 router.delete("/:cartItemId", removeCartItem);
 router.post("/sync", syncCart);
 
