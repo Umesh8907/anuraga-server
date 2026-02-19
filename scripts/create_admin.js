@@ -31,6 +31,7 @@ const createAdmin = async () => {
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
             existingUser.role = "ADMIN";
+            existingUser.email = email; // Ensure email is set even for existing users
             existingUser.passwordHash = await bcrypt.hash(password, 10);
             await existingUser.save();
             console.log("✅ User updated to ADMIN with new password.");

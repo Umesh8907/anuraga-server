@@ -16,9 +16,14 @@ export const initSocket = (httpServer) => {
     // Middleware for Authentication
     io.use(async (socket, next) => {
         try {
-            const token = socket.handshake.auth.token;
+            let token = socket.handshake.auth.token;
             if (!token) {
                 return next(new Error("Authentication error: Token missing"));
+            }
+
+            // Remove Bearer if present
+            if (token.startsWith("Bearer ")) {
+                token = token.slice(7, token.length);
             }
 
             // Verify token
@@ -37,7 +42,8 @@ export const initSocket = (httpServer) => {
             next();
         } catch (err) {
             console.error("Socket Auth Error:", err.message);
-            next(new Error("Authentication error"));
+            // Return specific error message to client for debugging
+            next(new Error(`Authentication error: ${err.message}`));
         }
     });
 

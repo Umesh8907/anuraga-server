@@ -22,7 +22,9 @@ const env = {
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
 
     // Client
-    CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
+    CLIENT_URL: process.env.CLIENT_URL
+        ? process.env.CLIENT_URL.split(",").map(url => url.trim())
+        : ["http://localhost:3000", "http://127.0.0.1:3000"],
 
     // Payments (Razorpay placeholder)
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "",

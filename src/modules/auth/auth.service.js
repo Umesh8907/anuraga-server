@@ -55,11 +55,22 @@ const register = async ({ phone, email, password, name, role = "USER" }) => {
 };
 
 const login = async ({ phone, password, role = "USER" }) => {
-    const user = await User.findOne({ phone, role });
+    // Find user by phone only first
+    const user = await User.findOne({ phone });
     if (!user) throw new AppError(401, "Invalid credentials");
 
+    // Verify Password
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) throw new AppError(401, "Invalid credentials");
+
+    // Role Logic: 
+    // If requesting ADMIN login, user MUST be ADMIN.
+    if (role === "ADMIN" && user.role !== "ADMIN") {
+        throw new AppError(403, "Access denied: Admins only");
+    }
+    // If requesting USER login (default store login), allow ALL roles (Admins can shop/test too).
+    // so we don't throw if user.role is ADMIN but requested role is USER.
+
 
     return issueTokens(user);
 };
