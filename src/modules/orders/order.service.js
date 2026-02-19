@@ -2,6 +2,7 @@ import Order from "./order.model.js";
 import cartService from "../cart/cart.service.js";
 import Product from "../products/product.model.js";
 import inventoryService from "../inventory/inventory.service.js";
+import AppError from "../../utils/AppError.js";
 
 export const createOrder = async (userId, orderData) => {
     console.log("DEBUG: Service createOrder - userId:", userId);
@@ -128,9 +129,38 @@ export const getAllOrders = async (query = {}) => {
     };
 };
 
+const VALID_TRANSITIONS = {
+    "PENDING": ["CONFIRMED", "CANCELLED"],
+    "CONFIRMED": ["SHIPPED", "CANCELLED"],
+    "SHIPPED": ["DELIVERED"], // Once shipped, usually delivered. Cancellation might need return process.
+    "DELIVERED": [], // Terminal state
+    "CANCELLED": []  // Terminal state
+};
+
+/**
+ * Validates if an order can transition from currentStatus to newStatus
+ * @param {string} currentStatus 
+ * @param {string} newStatus 
+ * @throws {AppError} if transition is invalid
+ */
+const validateStatusTransition = (currentStatus, newStatus) => {
+    const allowedStatuses = VALID_TRANSITIONS[currentStatus] || [];
+    if (!allowedStatuses.includes(newStatus)) {
+        throw new AppError(400, `Invalid status transition from ${currentStatus} to ${newStatus}`);
+    }
+};
+
 export const updateOrderStatus = async (orderId, status, note = "") => {
     const order = await Order.findById(orderId);
-    if (!order) throw new Error("Order not found");
+    if (!order) throw new AppError(404, "Order not found");
+
+    // Validate transition
+    validateStatusTransition(order.orderStatus, status);
+
+    // specific check for CANCELLED to ensure we use the cancel logic (restocking etc)
+    if (status === "CANCELLED") {
+        return await cancelOrder(orderId, note || "Cancelled via Status Update");
+    }
 
     order.orderStatus = status;
     order.history.push({
