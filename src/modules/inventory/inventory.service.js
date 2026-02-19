@@ -1,5 +1,6 @@
 import InventoryTransaction from "./inventory.model.js";
 import Product from "../products/product.model.js";
+import * as notificationService from "../notifications/notification.service.js";
 
 export const logTransaction = async (data) => {
     const transaction = new InventoryTransaction(data);
@@ -68,6 +69,17 @@ export const adjustStock = async ({ productId, variantId, quantity, type, reason
     // Update Product Stock
     variant.stock = currentStock;
     await product.save();
+
+    // Check for Low Stock
+    if (currentStock < 10) {
+        notificationService.sendToAdmins({
+            type: 'INVENTORY',
+            title: 'Low Stock Alert',
+            message: `Product "${product.name} - ${variant.label}" is running low (${currentStock} left).`,
+            link: `/admin/inventory?search=${product.name}`,
+            metadata: { productId: product._id, variantId: variant._id, currentStock }
+        });
+    }
 
     // Log Transaction
     await logTransaction({

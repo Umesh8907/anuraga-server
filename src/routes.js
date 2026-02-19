@@ -10,6 +10,7 @@ import paymentRoutes from "./modules/payments/payment.routes.js";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
 import reviewRoutes from "./modules/reviews/review.routes.js";
 import inventoryRoutes from "./modules/inventory/inventory.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
 const router = Router();
 
 router.use("/collections", collectionRoutes);
@@ -25,6 +26,7 @@ router.use("/payments", paymentRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/inventory", inventoryRoutes);
+router.use("/notifications", notificationRoutes);
 
 router.get("/health", (req, res) => {
     res.json({ api: "running" });

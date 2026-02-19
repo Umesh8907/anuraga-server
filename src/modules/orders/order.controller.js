@@ -1,10 +1,21 @@
 import * as orderService from "./order.service.js";
+import * as notificationService from "../notifications/notification.service.js";
 
 export const createOrder = async (req, res, next) => {
     try {
         console.log("DEBUG: Controller createOrder - req.user:", req.user);
         console.log("DEBUG: Controller createOrder - req.body:", req.body);
         const order = await orderService.createOrder(req.user.id, req.body);
+
+        // Notify Admins
+        notificationService.sendToAdmins({
+            type: 'ORDER',
+            title: 'New Order Received',
+            message: `Order #${order._id} received from ${req.user.name || 'Customer'}`,
+            link: `/admin/orders/${order._id}`,
+            metadata: { orderId: order._id }
+        });
+
         res.status(201).json({ success: true, data: order });
     } catch (error) {
         console.error("ORDER CREATION ERROR:", error);
@@ -54,6 +65,18 @@ export const updateOrderStatus = async (req, res, next) => {
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
+
+        // Notify User
+        // Ensure we have a user ID. If order.user is an object (populated), use ._id
+        const userId = order.user._id || order.user;
+        notificationService.sendToUser(userId, {
+            type: 'ORDER',
+            title: 'Order Status Updated',
+            message: `Your order #${order._id} is now ${status}`,
+            link: `/account/orders/${order._id}`,
+            metadata: { orderId: order._id, status }
+        });
+
         res.json({ success: true, data: order });
     } catch (error) {
         next(error);
