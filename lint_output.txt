@@ -1,0 +1,14 @@
+
+> organic-ecommerce-backend@1.0.0 lint
+> eslint .
+
+
+C:\Users\umesh\Desktop\ANURAGA\anuraga-server\src\modules\cart\cart.service.js
+  204:5  error  Duplicate key 'removeCartItem'  no-dupe-keys
+
+C:\Users\umesh\Desktop\ANURAGA\anuraga-server\src\modules\orders\order.service.js
+  52:13  warning  '_id' is assigned a value but never used        no-unused-vars
+  52:18  warning  'isDefault' is assigned a value but never used  no-unused-vars
+
+Γ£û 3 problems (1 error, 2 warnings)
+

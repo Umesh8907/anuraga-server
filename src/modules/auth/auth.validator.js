@@ -1,12 +1,21 @@
 // src/modules/auth/auth.validation.js
 
 export const validateRegister = (req, res, next) => {
-    const { phone, password } = req.body;
+    const { phone, email, password } = req.body;
 
-    if (!phone || !password) {
+    if (!phone || !email || !password) {
         return res.status(400).json({
             success: false,
-            message: "Phone and password are required",
+            message: "Phone, email and password are required",
+        });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid email address",
         });
     }
 

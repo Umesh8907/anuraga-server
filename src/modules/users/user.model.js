@@ -34,7 +34,16 @@ const userSchema = new mongoose.Schema(
         phone: {
             type: String,
             required: true,
+            unique: true, // Phone should be unique
             index: true
+        },
+
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true
         },
 
         passwordHash: {

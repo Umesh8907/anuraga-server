@@ -26,14 +26,26 @@ const generateRefreshToken = () => {
 
 /* ---------- core ---------- */
 
-const register = async ({ phone, password, name, role = "USER" }) => {
-    const exists = await User.findOne({ phone, role });
-    if (exists) throw new AppError(400, `Phone already registered as ${role}`);
+const register = async ({ phone, email, password, name, role = "USER" }) => {
+    // Check if phone or email already exists
+    const existingUser = await User.findOne({
+        $or: [{ phone }, { email }]
+    });
+
+    if (existingUser) {
+        if (existingUser.phone === phone) {
+            throw new AppError(400, `Phone already registered`);
+        }
+        if (existingUser.email === email) {
+            throw new AppError(400, `Email already registered`);
+        }
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
         phone,
+        email,
         passwordHash,
         name,
         role
