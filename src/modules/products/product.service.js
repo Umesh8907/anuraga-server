@@ -2,10 +2,56 @@ import Product from "./product.model.js";
 import inventoryService from "../inventory/inventory.service.js";
 
 const getProductBySlug = async (slug) => {
-    return Product.findOne({
+    const product = await Product.findOne({
         slug,
         isActive: true
     }).populate("collections", "name slug");
+
+    if (!product) return null;
+
+    // 1. Dynamic Related Products: Same Collection, excluding current
+    let relatedProducts = [];
+
+    // Try by collection first
+    if (product.collections && product.collections.length > 0) {
+        relatedProducts = await Product.find({
+            collections: { $in: product.collections.map(c => c._id || c) },
+            _id: { $ne: product._id },
+            isActive: true
+        })
+            .select("name images variants description brand slug")
+            .limit(8);
+    }
+
+    // If no related products found (e.g. only 1 item in collection), fallback to any active products
+    if (relatedProducts.length === 0) {
+        relatedProducts = await Product.find({
+            _id: { $ne: product._id },
+            isActive: true
+        })
+            .sort({ createdAt: -1 }) // Newest
+            .select("name images variants description brand slug")
+            .limit(8);
+    }
+
+    // 2. Dynamic Frequently Bought: Most Ordered (Global Best Sellers)
+    // In a complex app, this would be "people who bought X also bought Y" aggregation
+    // For now, we use "Most Ordered" as a proxy for popularity
+    const frequentlyBoughtTogether = await Product.find({
+        _id: { $ne: product._id },
+        isActive: true
+    })
+        .sort({ "variants.ordered": -1 }) // Sort by most ordered variant
+        .select("name images variants description brand slug")
+        .limit(8);
+
+    // Attach to product object (will need to be a plain object or handled in frontend)
+    // Since Product is a mongoose document, we can't easily append arbitrary fields without conversion
+    const productObj = product.toObject();
+    productObj.relatedProducts = relatedProducts;
+    productObj.frequentlyBoughtTogether = frequentlyBoughtTogether;
+
+    return productObj;
 };
 
 const getProductById = async (id) => {
