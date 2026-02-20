@@ -134,20 +134,47 @@ const getAllProducts = async (query = {}) => {
     };
 };
 
+import { productCreateSchema, productUpdateSchema } from "./product.validator.js";
+
+const generateUniqueSlug = async (name, currentId = null) => {
+    let slug = slugify(name, { lower: true, strict: true });
+    let uniqueSlug = slug;
+    let counter = 1;
+
+    while (true) {
+        const existingProduct = await Product.findOne({
+            slug: uniqueSlug,
+            _id: { $ne: currentId }
+        });
+
+        if (!existingProduct) break;
+        uniqueSlug = `${slug}-${counter}`;
+        counter++;
+    }
+
+    return uniqueSlug;
+};
+
 const createProduct = async (productData) => {
-    const slug = slugify(productData.name, { lower: true });
+    // Validate
+    const validatedData = productCreateSchema.parse(productData);
+
+    const slug = await generateUniqueSlug(validatedData.name);
     const product = new Product({
-        ...productData,
+        ...validatedData,
         slug
     });
     return await product.save();
 };
 
 const updateProduct = async (id, productData) => {
-    if (productData.name) {
-        productData.slug = slugify(productData.name, { lower: true });
+    // Validate partial data
+    const validatedData = productUpdateSchema.parse(productData);
+
+    if (validatedData.name) {
+        validatedData.slug = await generateUniqueSlug(validatedData.name, id);
     }
-    return await Product.findByIdAndUpdate(id, productData, { new: true });
+    return await Product.findByIdAndUpdate(id, validatedData, { new: true });
 };
 
 const deleteProduct = async (id) => {

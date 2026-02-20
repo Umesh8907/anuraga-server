@@ -38,46 +38,36 @@ export const adjustStock = async ({ productId, variantId, quantity, type, reason
     if (!variant) throw new Error("Variant not found");
 
     const previousStock = variant.stock;
-    let currentStock = previousStock;
+    let delta = 0;
 
     if (type === "IN") {
-        currentStock += quantity;
+        delta = Math.abs(quantity);
     } else if (type === "OUT") {
-        currentStock -= quantity;
+        delta = -Math.abs(quantity);
     } else if (type === "ADJUSTMENT") {
-        // For adjustment, quantity is the NEW absolute stock or relative change?
-        // Let's assume quantity passed is the CHANGE amount for simplicity in this function,
-        // unless type implies "SET". 
-        // To be safe and consistent with "IN/OUT", let's assume 'quantity' is always a positive number 
-        // representing the MAGNITUDE of change, and type determines direction.
-        // However, "ADJUSTMENT" often implies setting to a specific value or correcting.
-        // Let's stick to: Inputs are always positive delta.
-        // If the user wants to "Set" stock, the controller should calculate the delta.
-        // Wait, for standard adjustments (damage, found stock), it's usually + or -.
-        // Let's support signed quantity for ADJUSTMENT if needed, or handle in controller.
-
-        // Revised approach: 
-        // IN: stock + quantity
-        // OUT: stock - quantity
-        // ADJUSTMENT: could be + or -. Let's assume the caller handles the logic or we use signed quantity.
-        // Let's stick to specific Types for clarity.
-
-        if (quantity > 0) currentStock += quantity;
-        else currentStock += quantity; // handle negative adjustments
+        delta = quantity; // Using signed quantity for adjustments
     }
 
-    // Update Product Stock
-    variant.stock = currentStock;
+    // Update stocks
+    variant.stock += delta;
+    variant.realStock = (variant.realStock || 0) + delta;
+    variant.inStock = (variant.inStock || 0) + delta;
+
+    // Safety check: Stock cannot be negative in most scenarios
+    if (variant.stock < 0) variant.stock = 0;
+    if (variant.realStock < 0) variant.realStock = 0;
+    if (variant.inStock < 0) variant.inStock = 0;
+
     await product.save();
 
     // Check for Low Stock
-    if (currentStock < 10) {
+    if (variant.stock < 10) {
         notificationService.sendToAdmins({
             type: 'INVENTORY',
             title: 'Low Stock Alert',
-            message: `Product "${product.name} - ${variant.label}" is running low (${currentStock} left).`,
+            message: `Product "${product.name} - ${variant.label}" is running low (${variant.stock} left).`,
             link: `/admin/inventory?search=${product.name}`,
-            metadata: { productId: product._id, variantId: variant._id, currentStock }
+            metadata: { productId: product._id, variantId: variant._id, currentStock: variant.stock }
         });
     }
 
@@ -87,14 +77,14 @@ export const adjustStock = async ({ productId, variantId, quantity, type, reason
         variantId,
         variantLabel: variant.label,
         type,
-        quantity: Math.abs(quantity),
+        quantity: Math.abs(delta),
         previousStock,
-        currentStock,
+        currentStock: variant.stock,
         reason,
         performedBy: userId
     });
 
-    return { success: true, currentStock };
+    return { success: true, currentStock: variant.stock };
 };
 
 export default {

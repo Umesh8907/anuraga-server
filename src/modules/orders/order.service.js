@@ -2,6 +2,7 @@ import Order from "./order.model.js";
 import cartService from "../cart/cart.service.js";
 import Product from "../products/product.model.js";
 import inventoryService from "../inventory/inventory.service.js";
+import deliveryService from "../delivery/delivery.service.js";
 import AppError from "../../utils/AppError.js";
 
 export const createOrder = async (userId, orderData) => {
@@ -11,6 +12,17 @@ export const createOrder = async (userId, orderData) => {
 
     if (!cart || cart.items.length === 0) {
         throw new Error("Cart is empty");
+    }
+
+    // 1.1 Validate Delivery Availability for Pincode
+    const pincode = orderData.shippingAddress.pincode;
+    const deliveryIssues = await deliveryService.validateCheckoutAvailability(
+        cart.items.map(item => ({ productId: item.product })),
+        pincode
+    );
+
+    if (deliveryIssues.length > 0) {
+        throw new AppError(400, `Some items are not deliverable to ${pincode}: ${deliveryIssues.map(i => i.message).join(', ')}`);
     }
 
     // 2. Create order items from cart and validate stock

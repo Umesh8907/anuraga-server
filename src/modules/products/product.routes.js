@@ -8,7 +8,8 @@ import {
     deleteProduct,
     searchProducts,
     bulkUpdateStock,
-    getProductById
+    getProductById,
+    checkProductAvailability
 } from "./product.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import adminMiddleware from "../../middlewares/admin.middleware.js";
@@ -163,6 +164,15 @@ router.put("/:id", authMiddleware, adminMiddleware, updateProduct);
  *     description: Get product by ID
  */
 router.get("/id/:id", getProductById);
+
+/**
+ * @openapi
+ * /products/{id}/check-delivery:
+ *   get:
+ *     tags: [Products]
+ *     description: Check delivery availability for a product by pincode
+ */
+router.get("/:id/check-delivery", checkProductAvailability);
 
 /**
  * @openapi

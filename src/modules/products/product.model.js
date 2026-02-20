@@ -102,11 +102,11 @@ const productSchema = new mongoose.Schema(
         dietaryPreference: {
             type: String
         },
-        canReturn: {
+        isDeliverableEverywhere: {
             type: Boolean,
-            default: false
+            default: true
         },
-        availableLocations: [String],
+        availableLocations: [String], // These will be treated as pincodes
         tags: [String],
 
 
@@ -174,7 +174,24 @@ const productSchema = new mongoose.Schema(
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Product"
             }
-        ]
+        ],
+
+        // SEO Fields
+        metaTitle: {
+            type: String,
+            trim: true
+        },
+        metaDescription: {
+            type: String,
+            trim: true
+        },
+        keywords: [String],
+
+        // Audit Fields
+        lastUpdatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
     },
     { timestamps: true }
 );

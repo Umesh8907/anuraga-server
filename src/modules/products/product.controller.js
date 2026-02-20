@@ -1,4 +1,5 @@
 import productService from "./product.service.js";
+import deliveryService from "../delivery/delivery.service.js";
 import Collection from "../collections/collection.model.js";
 
 export const getProductBySlug = async (req, res, next) => {
@@ -165,6 +166,22 @@ export const getProductById = async (req, res, next) => {
         res.status(200).json({
             success: true,
             data: product
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const checkProductAvailability = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { pincode } = req.query;
+
+        const result = await deliveryService.checkAvailability(id, pincode);
+
+        res.status(200).json({
+            success: true,
+            ...result
         });
     } catch (error) {
         next(error);
