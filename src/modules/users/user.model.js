@@ -13,6 +13,16 @@ const addressSchema = new mongoose.Schema(
         state: { type: String, required: true },
         pincode: { type: String, required: true },
 
+        addressType: {
+            type: String,
+            enum: ["HOME", "WORK", "HOTEL", "OTHER"],
+            default: "HOME"
+        },
+        coordinates: {
+            lat: { type: Number },
+            lng: { type: Number }
+        },
+
         isDefault: { type: Boolean, default: false }
     },
     { _id: true }
