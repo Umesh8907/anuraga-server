@@ -28,8 +28,12 @@ const seedRichProducts = async () => {
             {
                 name: "Authentic Mango Pickle",
                 slug: "authentic-mango-pickle",
-                description: "Homemade with hand-cut mangoes and traditional spices. Our mango pickle is preserved naturally without any artificial preservatives.",
-                images: ["https://images.unsplash.com/photo-1589135398309-11440026e63d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"],
+                description: "Homemade with hand-cut mangoes and traditional spices. Our mango pickle is preserved naturally without any artificial preservatives. Each bite brings back memories of grandmother's kitchen.",
+                images: [
+                    "https://images.unsplash.com/photo-1589135398309-11440026e63d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1547514711-e556a07f0027?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                ],
                 collections: [mangoCollection._id],
                 averageRating: 4.8,
                 reviewCount: 156,
@@ -52,8 +56,12 @@ const seedRichProducts = async () => {
             {
                 name: "Spicy Garlic Pickle",
                 slug: "spicy-garlic-pickle-rich",
-                description: "Bold and fiery garlic pickle made with farm-fresh garlic cloves. A perfect immunity booster for your daily meals.",
-                images: ["https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"],
+                description: "Bold and fiery garlic pickle made with farm-fresh garlic cloves. A perfect immunity booster for your daily meals. The pungent garlic and robust spices create a dance of flavors on your palate.",
+                images: [
+                    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                ],
                 collections: [garlicCollection._id],
                 averageRating: 4.9,
                 reviewCount: 89,
@@ -76,8 +84,12 @@ const seedRichProducts = async () => {
             {
                 name: "Organic Red Chilli Powder",
                 slug: "organic-red-chilli-powder-rich",
-                description: "Vibrant and aromatic red chilli powder, stone-ground to retain natural oils and intense heat.",
-                images: ["https://images.unsplash.com/photo-1596040033229-a9821ebd05ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"],
+                description: "Vibrant and aromatic red chilli powder, stone-ground to retain natural oils and intense heat. Give your curries the color and kick they deserve.",
+                images: [
+                    "https://images.unsplash.com/photo-1596040033229-a9821ebd05ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1532336414038-cf19250c5757?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1606923829579-0cb981a83e2e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                ],
                 collections: [spiceCollection._id],
                 averageRating: 4.7,
                 reviewCount: 42,
@@ -98,8 +110,12 @@ const seedRichProducts = async () => {
             {
                 name: "Best Sellers Combo",
                 slug: "best-sellers-combo",
-                description: "Get our two most loved pickles in one pack. Perfect for sampling or gifting.",
-                images: ["https://images.unsplash.com/photo-1547514711-e556a07f0027?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"],
+                description: "Get our two most loved pickles in one pack. Perfect for sampling or gifting. Includes a jar of Mango and Garlic pickles each.",
+                images: [
+                    "https://images.unsplash.com/photo-1547514711-e556a07f0027?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1589135398309-11440026e63d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                ],
                 collections: [comboCollection._id],
                 averageRating: 5.0,
                 reviewCount: 25,
@@ -118,7 +134,7 @@ const seedRichProducts = async () => {
         ];
 
         await Product.insertMany(products);
-        console.log("🌱 Rich products seeded successfully with full metadata");
+        console.log("🌱 Rich products seeded successfully with multiple images and metadata");
 
         process.exit(0);
     } catch (error) {
