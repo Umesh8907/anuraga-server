@@ -64,3 +64,23 @@ export const resetPassword = async (req, res, next) => {
         next(error);
     }
 };
+
+export const requestOTP = async (req, res, next) => {
+    try {
+        const { phone } = req.body;
+        const result = await authService.requestOTP(phone);
+        res.json(result);
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const verifyOTP = async (req, res, next) => {
+    try {
+        const { phone, otp } = req.body;
+        const data = await authService.verifyOTP(phone, otp);
+        res.json({ success: true, data });
+    } catch (err) {
+        next(err);
+    }
+};

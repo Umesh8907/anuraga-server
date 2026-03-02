@@ -58,8 +58,25 @@ const deleteAddress = async (userId, addressId) => {
     return user.addresses;
 };
 
+const updateProfile = async (userId, updates) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    // If updating email, check uniqueness (sparse index handles null, but we check for existing)
+    if (updates.email && updates.email !== user.email) {
+        const existing = await User.findOne({ email: updates.email });
+        if (existing) throw new Error("Email already registered");
+    }
+
+    Object.assign(user, updates);
+    await user.save();
+
+    return user;
+};
+
 export default {
     getUserById,
+    updateProfile,
     addAddress,
     updateAddress,
     deleteAddress

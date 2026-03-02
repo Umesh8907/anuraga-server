@@ -2,8 +2,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../users/user.model.js";
+import OTP from "../users/otp.model.js";
 import env from "../../config/env.js";
 import AppError from "../../utils/AppError.js";
+import smsUtils from "../../utils/sms.utils.js";
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_DAYS = 30;
@@ -97,6 +99,61 @@ const issueTokens = async (user) => {
         }
     };
 };
+
+/* ---------- OTP Flow ---------- */
+
+const requestOTP = async (phone) => {
+    // 1. Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 2. Save to DB (or update if exists)
+    await OTP.findOneAndUpdate(
+        { phone },
+        { otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+        { upsert: true, new: true }
+    );
+
+    // 3. Send SMS
+    const smsResult = await smsUtils.sendOtpSms(phone, otp);
+
+    // In dev, we might want to see the OTP even if SMS fails or isn't configured
+    if (!smsResult.success && env.NODE_ENV === 'production') {
+        throw new AppError(500, "Failed to send OTP. Please try again later.");
+    }
+
+    return {
+        success: true,
+        message: "OTP sent successfully",
+        otp: env.NODE_ENV === 'development' ? otp : undefined
+    };
+};
+
+const verifyOTP = async (phone, otp) => {
+    // 1. Verify OTP
+    const otpDoc = await OTP.findOne({ phone, otp });
+
+    if (!otpDoc) {
+        throw new AppError(400, "Invalid or expired OTP");
+    }
+
+    // 2. Delete OTP after verification
+    await OTP.deleteOne({ _id: otpDoc._id });
+
+    // 3. Find or Create User
+    let user = await User.findOne({ phone });
+
+    if (!user) {
+        // Create new user if not exists
+        user = await User.create({
+            phone,
+            role: "USER"
+        });
+    }
+
+    // 4. Issue Tokens
+    return issueTokens(user);
+};
+
 
 const refresh = async (refreshToken) => {
     const users = await User.find({
@@ -197,6 +254,8 @@ const resetPassword = async (resetToken, newPassword) => {
 };
 
 export default {
+    requestOTP,
+    verifyOTP,
     register,
     login,
     refresh,

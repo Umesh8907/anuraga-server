@@ -2,6 +2,7 @@ import { Router } from "express";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import {
     getProfile,
+    updateProfile,
     addAddress,
     updateAddress,
     deleteAddress
@@ -27,6 +28,7 @@ router.use(authMiddleware);
  *         description: User profile
  */
 router.get("/me", getProfile);
+router.put("/me", updateProfile);
 
 /* ---------- Address Management ---------- */
 

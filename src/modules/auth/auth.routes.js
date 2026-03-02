@@ -5,13 +5,17 @@ import {
     refresh,
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    requestOTP,
+    verifyOTP
 } from "./auth.controller.js";
 
 import {
     validateRegister,
     validateLogin,
-    validateRefresh
+    validateRefresh,
+    validateRequestOTP,
+    validateVerifyOTP
 } from "./auth.validator.js";
 
 import authMiddleware from "../../middlewares/auth.middleware.js";
@@ -166,5 +170,9 @@ router.post("/forgot-password", forgotPassword);
  *         description: Invalid or expired token
  */
 router.post("/reset-password/:token", resetPassword);
+
+/* ---------- OTP Flow ---------- */
+router.post("/request-otp", validateRequestOTP, requestOTP);
+router.post("/verify-otp", validateVerifyOTP, verifyOTP);
 
 export default router;

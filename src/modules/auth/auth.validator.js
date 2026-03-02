@@ -69,3 +69,36 @@ export const validateRefresh = (req, res, next) => {
 
     next();
 };
+
+export const validateRequestOTP = (req, res, next) => {
+    const { phone } = req.body;
+
+    if (!phone || !/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+            success: false,
+            message: "A valid 10-digit phone number is required",
+        });
+    }
+
+    next();
+};
+
+export const validateVerifyOTP = (req, res, next) => {
+    const { phone, otp } = req.body;
+
+    if (!phone || !/^\d{10}$/.test(phone)) {
+        return res.status(400).json({
+            success: false,
+            message: "A valid 10-digit phone number is required",
+        });
+    }
+
+    if (!otp || !/^\d{6}$/.test(otp)) {
+        return res.status(400).json({
+            success: false,
+            message: "A valid 6-digit OTP is required",
+        });
+    }
+
+    next();
+};
