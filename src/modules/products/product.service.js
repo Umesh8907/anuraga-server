@@ -1,5 +1,9 @@
+import mongoose from "mongoose";
 import Product from "./product.model.js";
+import Collection from "../collections/collection.model.js";
 import inventoryService from "../inventory/inventory.service.js";
+import slugify from "slugify";
+import { productCreateSchema, productUpdateSchema } from "./product.validator.js";
 
 const getProductBySlug = async (slug) => {
     const product = await Product.findOne({
@@ -65,7 +69,6 @@ const getProductsByCollection = async (collectionId) => {
     }).populate("collections", "name slug");
 };
 
-import slugify from "slugify";
 
 const getAllProducts = async (query = {}) => {
     const {
@@ -90,7 +93,17 @@ const getAllProducts = async (query = {}) => {
 
     // Collection Filter
     if (collection) {
-        filter.collections = collection;
+        if (mongoose.Types.ObjectId.isValid(collection)) {
+            filter.collections = collection;
+        } else {
+            const collectionDoc = await Collection.findOne({ slug: collection, isActive: true });
+            if (collectionDoc) {
+                filter.collections = collectionDoc._id;
+            } else {
+                // Return no products if collection slug is invalid
+                filter.collections = new mongoose.Types.ObjectId();
+            }
+        }
     }
 
     // Search Filter
@@ -134,7 +147,6 @@ const getAllProducts = async (query = {}) => {
     };
 };
 
-import { productCreateSchema, productUpdateSchema } from "./product.validator.js";
 
 const generateUniqueSlug = async (name, currentId = null) => {
     let slug = slugify(name, { lower: true, strict: true });

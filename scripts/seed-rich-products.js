@@ -9,132 +9,177 @@ const seedRichProducts = async () => {
         console.log("✅ MongoDB connected for rich product seeding");
 
         // Fetch collections
-        const mangoCollection = await Collection.findOne({ slug: "mango-pickles" });
-        const garlicCollection = await Collection.findOne({ slug: "garlic-pickles" });
-        const comboCollection = await Collection.findOne({ slug: "combos" });
-        const spiceCollection = await Collection.findOne({ slug: "spice-powders" });
-        const attaCollection = await Collection.findOne({ slug: "organic-atta" });
+        const collections = await Collection.find({});
+        const getCollId = (slug) => {
+            const coll = collections.find(c => c.slug === slug);
+            if (!coll) {
+                console.warn(`⚠️ Collection ${slug} not found`);
+                return null;
+            }
+            return coll._id;
+        };
 
-        if (!mangoCollection || !garlicCollection || !comboCollection) {
-            console.error("❌ Required collections not found. Please run seedCollections script first.");
-            process.exit(1);
-        }
+        const ids = {
+            mango: getCollId("mango-pickles"),
+            garlic: getCollId("garlic-pickles"),
+            combos: getCollId("combos"),
+            spices: getCollId("spice-powders"),
+            atta: getCollId("organic-atta"),
+            festive: getCollId("festive-deals")
+        };
 
         // Clear existing products
         await Product.deleteMany({});
         console.log("🧹 Existing products cleared");
 
         const products = [
+            // 🥭 MANGO PICKLES
             {
-                name: "Authentic Mango Pickle",
-                slug: "authentic-mango-pickle",
-                description: "Homemade with hand-cut mangoes and traditional spices. Our mango pickle is preserved naturally without any artificial preservatives. Each bite brings back memories of grandmother's kitchen.",
+                name: "Authentic Avakaya Mango Pickle",
+                slug: "authentic-avakaya-mango-pickle",
+                description: "The pride of South India. Our Avakaya is made using a century-old recipe featuring hand-cut sour mangoes, fiery Guntur chillies, and cold-pressed mustard oil. No water, no preservatives, just pure tradition.",
                 images: [
-                    "https://images.unsplash.com/photo-1589135398309-11440026e63d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1547514711-e556a07f0027?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                    "https://images.unsplash.com/photo-1589135398309-11440026e63d?q=80&w=800",
+                    "https://images.unsplash.com/photo-1547514711-e556a07f0027?q=80&w=800"
                 ],
-                collections: [mangoCollection._id],
-                averageRating: 4.8,
-                reviewCount: 156,
-                tags: ["Best Seller", "Organic"],
-                keyBenefits: [
-                    { title: "Preservative-Free", icon: "Check" },
-                    { title: "Woman-Made", icon: "Leaf" },
-                    { title: "Traditional Recipe", icon: "Shield" }
-                ],
-                keyIngredients: [
-                    { name: "Hand-cut Mangoes", image: "https://images.unsplash.com/photo-1553279768-865429fa0078?q=80&w=200", description: "Sourced from organic orchards in Andhra Pradesh." },
-                    { name: "Cold-pressed Mustard Oil", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=200", description: "Pure oil for natural preservation and rich flavor." }
-                ],
-                expertBadges: ["Ayurvedic Recipe", "Hygienically Packed"],
-                variants: [
-                    { label: "250g", price: 199, mrp: 249, stock: 100, isDefault: true },
-                    { label: "500g", price: 349, mrp: 449, stock: 60 }
-                ]
-            },
-            {
-                name: "Spicy Garlic Pickle",
-                slug: "spicy-garlic-pickle-rich",
-                description: "Bold and fiery garlic pickle made with farm-fresh garlic cloves. A perfect immunity booster for your daily meals. The pungent garlic and robust spices create a dance of flavors on your palate.",
-                images: [
-                    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                ],
-                collections: [garlicCollection._id],
+                collections: [ids.mango].filter(Boolean),
                 averageRating: 4.9,
+                reviewCount: 342,
+                brand: "Anuraga",
+                flavor: "Spicy & Sour",
+                itemForm: "Pickle",
+                ingredients: "Raw Mango, Mustard Powder, Red Chilli Powder, Salt, Fenugreek, Mustard Oil, Asafoetida.",
+                storageInstruction: "Store in a cool dry place. Avoid using wet spoons.",
+                expertBadges: ["100 Year Old Recipe", "No Added Preservatives"],
+                keyBenefits: [{ title: "Gut Health", icon: "Activity" }, { title: "Traditional", icon: "Shield" }],
+                variants: [
+                    { label: "250g", price: 219, mrp: 299, stock: 150, isDefault: true },
+                    { label: "500g", price: 399, mrp: 549, stock: 80 }
+                ]
+            },
+            {
+                name: "Sweet & Sour Mango Chutney",
+                slug: "sweet-sour-mango-chutney",
+                description: "A delightful balance of jaggery sweetness and mango tanginess. Perfect for kids and those who prefer a milder, more versatile pickle that pairs beautifully with parathas and bread.",
+                images: ["https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=800"],
+                collections: [ids.mango].filter(Boolean),
+                averageRating: 4.6,
+                reviewCount: 128,
+                brand: "Anuraga",
+                flavor: "Sweet & Tangy",
+                ingredients: "Grated Mango, Jaggery, Cinnamon, Cardamom, Cumin, Black Salt.",
+                variants: [{ label: "300g", price: 249, mrp: 299, stock: 60, isDefault: true }]
+            },
+
+            // 🧄 GARLIC PICKLES
+            {
+                name: "Royal Garlic Pickle",
+                slug: "royal-garlic-pickle",
+                description: "Whole peeled garlic cloves slow-cooked in a spicy marinade. This pickle is known for its nutty texture and robust flavor profile. An excellent immunity booster for the whole family.",
+                images: ["https://images.unsplash.com/photo-1589135398309-11440026e63d?q=80&w=800"],
+                collections: [ids.garlic].filter(Boolean),
+                averageRating: 4.8,
                 reviewCount: 89,
-                tags: ["Immunity", "Spicy"],
-                keyBenefits: [
-                    { title: "Immunity Booster", icon: "Shield" },
-                    { title: "100% Vegan", icon: "Leaf" },
-                    { title: "No Sugars", icon: "Activity" }
-                ],
-                keyIngredients: [
-                    { name: "Farm-fresh Garlic", image: "https://images.unsplash.com/photo-1589135398309-11440026e63d?q=80&w=200", description: "Slow-roasted for a nutty aroma." },
-                    { name: "Sun-dried Red Chillies", image: "https://images.unsplash.com/photo-1596040033229-a9821ebd05ed?q=80&w=200", description: "Adds the perfect amount of heat." }
-                ],
-                expertBadges: ["Immunity Focused", "Small Batch Production"],
+                brand: "Anuraga",
+                flavor: "Robust Garlic",
+                itemForm: "Whole Clove Pickle",
+                expertBadges: ["Immunity Booster", "Handmade"],
                 variants: [
-                    { label: "250g", price: 229, mrp: 299, stock: 80, isDefault: true },
-                    { label: "500g", price: 429, mrp: 549, stock: 40 }
+                    { label: "250g", price: 239, mrp: 299, stock: 90, isDefault: true },
+                    { label: "500g", price: 449, mrp: 549, stock: 40 }
                 ]
             },
+
+            // 🌶️ SPICE POWDERS
             {
-                name: "Organic Red Chilli Powder",
-                slug: "organic-red-chilli-powder-rich",
-                description: "Vibrant and aromatic red chilli powder, stone-ground to retain natural oils and intense heat. Give your curries the color and kick they deserve.",
-                images: [
-                    "https://images.unsplash.com/photo-1596040033229-a9821ebd05ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1532336414038-cf19250c5757?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1606923829579-0cb981a83e2e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                ],
-                collections: [spiceCollection._id],
+                name: "Stone Ground Turmeric Powder",
+                slug: "stone-ground-turmeric",
+                description: "Highest curcumin content Turmeric sourced from the hills of Meghalaya. Stone-ground at low temperatures to retain natural oils and medicinal properties.",
+                images: ["https://images.unsplash.com/photo-1615485290382-441e4d049cb5?q=80&w=800"],
+                collections: [ids.spices].filter(Boolean),
+                averageRating: 4.9,
+                reviewCount: 56,
+                brand: "Anuraga",
+                itemForm: "Fine Powder",
+                ingredients: "100% Organic Turmeric Rhizomes.",
+                expertBadges: ["High Curcumin", "Lab Tested"],
+                variants: [{ label: "200g", price: 149, mrp: 199, stock: 200, isDefault: true }]
+            },
+            {
+                name: "Aromatic Coriander Powder",
+                slug: "aromatic-coriander-powder",
+                description: "Dry roasted coriander seeds ground to perfection. Adds a sweet, citrusy aroma to any dish. No fillers, no colors, just pure spice.",
+                images: ["https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=800"],
+                collections: [ids.spices].filter(Boolean),
+                averageRating: 4.5,
+                reviewCount: 34,
+                brand: "Anuraga",
+                itemForm: "Powder",
+                variants: [{ label: "250g", price: 129, mrp: 159, stock: 150, isDefault: true }]
+            },
+
+            // 🌾 ORGANIC ATTA
+            {
+                name: "Premium Stone-Ground Chakki Atta",
+                slug: "premium-chakki-atta",
+                description: "Whole wheat grain stone-ground to preserve the bran and germ. Makes the softest rotis with high fiber content. Sourced from pesticide-free wheat fields.",
+                images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=800"],
+                collections: [ids.atta].filter(Boolean),
                 averageRating: 4.7,
-                reviewCount: 42,
-                tags: ["Stone Ground", "Pure"],
-                keyBenefits: [
-                    { title: "Pure Organic", icon: "Leaf" },
-                    { title: "No Adulteration", icon: "Shield" }
-                ],
-                keyIngredients: [
-                    { name: "Dried Red Chillies", image: "https://images.unsplash.com/photo-1596040033229-a9821ebd05ed?q=80&w=200", description: "High-grade chillies for bright color and heat." }
-                ],
-                expertBadges: ["Lab Tested", "Zero Pesticides"],
+                reviewCount: 215,
+                brand: "Anuraga",
+                itemForm: "Flour",
+                packagingType: "Eco-friendly Paper Bag",
+                expertBadges: ["Stone Ground", "Pesticide Free"],
                 variants: [
-                    { label: "200g", price: 179, mrp: 229, stock: 120, isDefault: true },
-                    { label: "500g", price: 399, mrp: 499, stock: 50 }
+                    { label: "5kg", price: 349, mrp: 449, stock: 100, isDefault: true },
+                    { label: "10kg", price: 649, mrp: 799, stock: 50 }
                 ]
             },
             {
-                name: "Best Sellers Combo",
-                slug: "best-sellers-combo",
-                description: "Get our two most loved pickles in one pack. Perfect for sampling or gifting. Includes a jar of Mango and Garlic pickles each.",
-                images: [
-                    "https://images.unsplash.com/photo-1547514711-e556a07f0027?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1589135398309-11440026e63d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                ],
-                collections: [comboCollection._id],
-                averageRating: 5.0,
-                reviewCount: 25,
-                tags: ["Best Seller", "Value Pack"],
+                name: "Ancient Grains Multi-grain Atta",
+                slug: "ancient-grains-atta",
+                description: "A super-blend of Wheat, Ragi, Bajra, Jowar, and Soy. Designed for the health-conscious consumer who refuses to compromise on taste.",
+                images: ["https://images.unsplash.com/photo-1627485204223-39d9361a868f?q=80&w=800"],
+                collections: [ids.atta].filter(Boolean),
+                averageRating: 4.8,
+                reviewCount: 67,
+                brand: "Anuraga",
+                itemForm: "Flour",
+                expertBadges: ["Energy Rich", "High Protein"],
+                variants: [{ label: "5kg", price: 429, mrp: 499, stock: 80, isDefault: true }]
+            },
+
+            // 🎁 COMBOS
+            {
+                name: "Ultimate South Indian Pickle Combo",
+                slug: "ultimate-pickle-combo",
+                description: "A curated selection of our top 3 pickles: Mango, Garlic, and Tomato. The perfect starter pack for an authentic South Indian dining experience.",
+                images: ["https://images.unsplash.com/photo-1547514711-e556a07f0027?q=80&w=800"],
+                collections: [ids.combos, ids.festive].filter(Boolean),
                 isCombo: true,
-                keyBenefits: [
-                    { title: "Value For Money", icon: "Activity" },
-                    { title: "Perfect Gift", icon: "Check" }
-                ],
-                expertBadges: ["Collector's Choice"],
-                variants: [
-                    { label: "250g x 2", price: 399, mrp: 498, stock: 30, isDefault: true },
-                    { label: "500g x 2", price: 699, mrp: 898, stock: 15 }
-                ]
+                averageRating: 5.0,
+                reviewCount: 45,
+                brand: "Anuraga",
+                expertBadges: ["Best Value", "Gift Worthy"],
+                variants: [{ label: "250g x 3 Jars", price: 599, mrp: 897, stock: 100, isDefault: true }]
+            },
+            {
+                name: "Breakfast Essentials Box",
+                slug: "breakfast-essentials-box",
+                description: "Includes our Sweet Mango Chutney, Stone-ground Atta (5kg), and Ginger Garlic Paste. Everything you need for a wholesome family breakfast.",
+                images: ["https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=800"],
+                collections: [ids.combos].filter(Boolean),
+                isCombo: true,
+                averageRating: 4.9,
+                reviewCount: 22,
+                brand: "Anuraga",
+                variants: [{ label: "Standard Box", price: 849, mrp: 1099, stock: 30, isDefault: true }]
             }
         ];
 
         await Product.insertMany(products);
-        console.log("🌱 Rich products seeded successfully with multiple images and metadata");
+        console.log(`🌱 Successfully seeded ${products.length} rich products across all categories.`);
 
         process.exit(0);
     } catch (error) {
