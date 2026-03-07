@@ -1,14 +1,17 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
 import compression from "compression";
-import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+import morgan from "morgan";
 import limitMiddleware from "../middlewares/rateLimit.middleware.js";
 
 import env from "../config/env.js";
 
 const expressLoader = (app) => {
+    // Trust proxy (required for express-rate-limit behind Docker/Nginx)
+    app.set("trust proxy", 1);
+
     // Security headers
     app.use(helmet());
 
