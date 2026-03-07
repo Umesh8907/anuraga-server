@@ -1,0 +1,51 @@
+name: Deploy Frontend to Dev
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'anuraga-pickles/**'
+      - '.github/workflows/deploy-pickles-dev.yml'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Log in to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.pocapi.in
+          username: ${{ secrets.REGISTRY_UNAME }}
+          password: ${{ secrets.REGISTRY_PWD }}
+          
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./anuraga-pickles
+          push: true
+          tags: registry.pocapi.in/anuraga-pickles:dev
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_SERVER_IP }}
+          username: root # Change this if your server requires a different ssh user
+          password: ${{ secrets.SSH_SERVER_PWD }}
+          script: |
+            cd /data/docker-compose
+            
+            docker login registry.pocapi.in -u ${{ secrets.REGISTRY_UNAME }} -p "${{ secrets.REGISTRY_PWD }}"
+            
+            docker compose -f anuraga_pickles_docker_compose.yml pull
+            
+            docker compose -f anuraga_pickles_docker_compose.yml up -d
