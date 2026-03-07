@@ -1,6 +1,17 @@
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
 
-dotenv.config();
+const nodeEnv = process.env.NODE_ENV || "development";
+
+// Load environment-specific file first
+const envPath = path.resolve(process.cwd(), `.env.${nodeEnv}`);
+if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+}
+
+// Fallback to default .env for any missing values
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 function requireEnv(key) {
     if (!process.env[key]) {

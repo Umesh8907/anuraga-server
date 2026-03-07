@@ -5,8 +5,12 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
+    "dev:local": "cross-env NODE_ENV=local nodemon src/server.js",
+    "dev": "cross-env NODE_ENV=dev nodemon src/server.js",
+    "start:local": "cross-env NODE_ENV=local node src/server.js",
+    "start:dev": "cross-env NODE_ENV=dev node src/server.js",
+    "start:test": "cross-env NODE_ENV=test node src/server.js",
+    "start:prod": "cross-env NODE_ENV=prod node src/server.js",
     "lint": "eslint .",
     "seed": "node scripts/seed.js",
     "migrate": "node scripts/migrate.js"
@@ -41,6 +45,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "nodemon": "^3.0.3",
