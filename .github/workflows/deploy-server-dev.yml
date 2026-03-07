@@ -1,9 +1,13 @@
-name: Deploy Frontend to Dev
+name: Deploy Backend to Dev
 
 on:
   push:
-    branches: [ "dev" ]
-    
+    branches:
+      - dev
+    paths:
+      - 'anuraga-server/**'
+      - '.github/workflows/deploy-server-dev.yml'
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -19,12 +23,12 @@ jobs:
           username: ${{ secrets.REGISTRY_UNAME }}
           password: ${{ secrets.REGISTRY_PWD }}
           
-      - name: Build and Push Frontend
+      - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./anuraga-pickles
+          context: ./anuraga-server
           push: true
-          tags: registry.pocapi.in/anuraga-pickles:dev
+          tags: registry.pocapi.in/anuraga-server:dev
 
   deploy:
     needs: build-and-push
@@ -42,6 +46,6 @@ jobs:
             
             docker login registry.pocapi.in -u ${{ secrets.REGISTRY_UNAME }} -p "${{ secrets.REGISTRY_PWD }}"
             
-            docker compose -f anuraga_pickles_docker_compose.yml pull
+            docker compose -f anuraga_server_docker_compose.yml pull
             
-            docker compose -f anuraga_pickles_docker_compose.yml up -d
+            docker compose -f anuraga_server_docker_compose.yml up -d
