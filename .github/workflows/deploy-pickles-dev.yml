@@ -2,12 +2,8 @@ name: Deploy Frontend to Dev
 
 on:
   push:
-    branches:
-      - dev
-    paths:
-      - 'anuraga-pickles/**'
-      - '.github/workflows/deploy-pickles-dev.yml'
-
+    branches: [ "dev" ]
+    
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
