@@ -11,6 +11,7 @@
     "start:dev": "cross-env NODE_ENV=dev node src/server.js",
     "start:test": "cross-env NODE_ENV=test node src/server.js",
     "start:prod": "cross-env NODE_ENV=prod node src/server.js",
+    "start": "node src/server.js",
     "lint": "eslint .",
     "seed": "node scripts/seed.js",
     "migrate": "node scripts/migrate.js"

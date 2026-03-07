@@ -153,15 +153,19 @@ const generateUniqueSlug = async (name, currentId = null) => {
     let uniqueSlug = slug;
     let counter = 1;
 
-    while (true) {
+    let found = false;
+    while (!found) {
         const existingProduct = await Product.findOne({
             slug: uniqueSlug,
             _id: { $ne: currentId }
         });
 
-        if (!existingProduct) break;
-        uniqueSlug = `${slug}-${counter}`;
-        counter++;
+        if (!existingProduct) {
+            found = true;
+        } else {
+            uniqueSlug = `${slug}-${counter}`;
+            counter++;
+        }
     }
 
     return uniqueSlug;

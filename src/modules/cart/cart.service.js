@@ -201,7 +201,6 @@ export default {
     updateCartItem,
     updateCartItemVariant,
     removeCartItem,
-    removeCartItem,
     clearCart,
     syncCart
 };
