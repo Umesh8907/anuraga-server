@@ -1,4 +1,5 @@
 import * as orderService from "./order.service.js";
+import * as invoiceService from "./invoice.service.js";
 import * as notificationService from "../notifications/notification.service.js";
 
 export const createOrder = async (req, res, next) => {
@@ -99,6 +100,24 @@ export const cancelOrder = async (req, res, next) => {
 
         const order = await orderService.cancelOrder(id, reason);
         res.json({ success: true, data: order });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getInvoice = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const invoiceData = await invoiceService.getInvoiceData(id);
+
+        // Security: Ensure user owns the order OR is admin
+        // req.user from authMiddleware, assuming it has id/role
+        const order = await orderService.getOrderById(id);
+        if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Not authorized" });
+        }
+
+        res.json({ success: true, data: invoiceData });
     } catch (error) {
         next(error);
     }

@@ -57,3 +57,14 @@ export const getAllPayments = async (req, res, next) => {
         next(error);
     }
 };
+
+export const handleRazorpayWebhook = async (req, res, next) => {
+    try {
+        const signature = req.headers["x-razorpay-signature"];
+        const result = await paymentService.handleRazorpayWebhook(req.body, signature);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Webhook Error:", error);
+        next(error);
+    }
+};

@@ -2,8 +2,14 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import env from "../../config/env.js";
 import Order from "../orders/order.model.js";
+import User from "../users/user.model.js";
+import * as orderService from "../orders/order.service.js";
+import * as smsService from "../notifications/sms.service.js";
+import * as emailService from "../notifications/email.service.js";
 import Payment from "./payment.model.js";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 
 let razorpay;
 
@@ -184,4 +190,112 @@ export const getAllPayments = async (query = {}) => {
         totalPages: Math.ceil(count / limit),
         currentPage: page
     };
+};
+
+export const handleRazorpayWebhook = async (webhookPayload, signature) => {
+    if (!razorpay) throw new Error("Razorpay not configured");
+
+    // 1. Verify Signature
+    const isVerified = Razorpay.validateWebhookSignature(
+        JSON.stringify(webhookPayload),
+        signature,
+        env.RAZORPAY_WEBHOOK_SECRET
+    );
+
+    if (!isVerified) {
+        throw new Error("Invalid Webhook Signature");
+    }
+
+    const { event, payload } = webhookPayload;
+    console.log(`DEBUG: Received Webhook Event: ${event}`);
+
+    // 2. Handle specific events
+    if (event === "order.paid") {
+        const rzOrder = payload.order.entity;
+        const rzPayment = payload.payment ? payload.payment.entity : null;
+
+        // Find order by razorpayOrderId (stored during checkout)
+        const order = await Order.findOne({ razorpayOrderId: rzOrder.id });
+        if (!order) return { processed: false, reason: "Order not found" };
+
+        // Idempotency check: Already paid?
+        if (order.paymentStatus === "PAID") return { processed: true, message: "Already paid" };
+
+        // Update Order
+        order.paymentStatus = "PAID";
+        order.orderStatus = "CONFIRMED"; // Confirm order on payment
+        order.razorpayPaymentId = rzPayment ? rzPayment.id : order.razorpayPaymentId;
+
+        // Generate Invoice Number if not already present
+        if (!order.invoiceNumber) {
+            order.invoiceNumber = await orderService.generateInvoiceNumber();
+        }
+
+        order.history.push({
+            status: "PAID",
+            note: `Confirmed via Webhook (Payment: ${order.razorpayPaymentId})`
+        });
+
+        await order.save();
+
+        // Log Payment for Audit
+        if (rzPayment) {
+            await Payment.findOneAndUpdate(
+                { razorpayOrderId: rzOrder.id },
+                {
+                    status: "PAID",
+                    razorpayPaymentId: rzPayment.id,
+                    method: rzPayment.method,
+                    amount: rzPayment.amount / 100,
+                    rawResponse: payload
+                },
+                { upsert: true }
+            );
+        }
+
+        // 3. Send Notifications
+        try {
+            const customer = await User.findById(order.user);
+            if (customer) {
+                const customerName = customer.name || order.shippingAddress?.name || "Customer";
+                const customerPhone = customer.phoneNumber || order.shippingAddress?.phone;
+                const customerEmail = customer.email;
+
+                // 3a. Send SMS (DLT Template 205882: Order Confirmed)
+                if (customerPhone) {
+                    await smsService.sendDLTSms("205882", customerPhone, [
+                        customerName,
+                        order.salesOrderNumber || order.orderNumber
+                    ]);
+                }
+
+                // 3b. Send Email
+                if (customerEmail) {
+                    const templatePath = path.resolve(process.cwd(), "src/templates/email/order-confirmed.html");
+                    if (fs.existsSync(templatePath)) {
+                        let html = fs.readFileSync(templatePath, "utf-8");
+                        html = html
+                            .replace("{{customerName}}", customerName)
+                            .replace("{{orderNumber}}", order.orderNumber)
+                            .replace("{{invoiceNumber}}", order.invoiceNumber)
+                            .replace("{{totalAmount}}", order.totalAmount)
+                            .replace("{{orderId}}", order._id)
+                            .replace("{{clientUrl}}", env.CLIENT_URL?.[0] || "http://localhost:3000");
+
+                        await emailService.sendEmail({
+                            to: customerEmail,
+                            subject: `Order Confirmed - ${order.orderNumber}`,
+                            html
+                        });
+                    }
+                }
+            }
+        } catch (notifError) {
+            console.error("⚠️ Notification failed (non-fatal):", notifError.message);
+        }
+
+        return { processed: true, orderId: order._id };
+    }
+
+    return { processed: false, reason: "Unhandled event" };
 };

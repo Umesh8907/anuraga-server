@@ -7,18 +7,33 @@ const orderItemSchema = new mongoose.Schema({
         required: true
     },
     variant: {
-        type: mongoose.Schema.Types.ObjectId, // If using variants
+        type: mongoose.Schema.Types.ObjectId,
         required: false
     },
     name: { type: String, required: true },
     image: { type: String },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true, min: 1 },
+    discount: { type: Number, default: 0 },
+    taxableAmount: { type: Number, required: true },
+    cgst: { type: Number, default: 0 },
+    sgst: { type: Number, default: 0 },
+    igst: { type: Number, default: 0 },
+    utgst: { type: Number, default: 0 },
     total: { type: Number, required: true }
 });
 
 const orderSchema = new mongoose.Schema(
     {
+        orderNumber: {
+            type: String,
+            unique: true
+        },
+        invoiceNumber: {
+            type: String,
+            unique: true,
+            sparse: true
+        },
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -55,13 +70,20 @@ const orderSchema = new mongoose.Schema(
             ],
             default: "PENDING"
         },
+        subTotal: { type: Number, default: 0 },
+        taxableSubTotal: { type: Number, default: 0 },
+        totalTax: { type: Number, default: 0 },
+        cgst: { type: Number, default: 0 },
+        sgst: { type: Number, default: 0 },
+        igst: { type: Number, default: 0 },
+        utgst: { type: Number, default: 0 },
+        deliveryCharge: { type: Number, default: 0 },
         totalAmount: {
             type: Number,
             required: true
         },
-        transactionId: {
-            type: String // For online payments
-        },
+        razorpayOrderId: { type: String },
+        razorpayPaymentId: { type: String },
         history: [
             {
                 status: { type: String, required: true },

@@ -2,11 +2,15 @@ import { Router } from "express";
 import {
     createRazorpayOrder,
     verifyRazorpayPayment,
-    getAllPayments
+    getAllPayments,
+    handleRazorpayWebhook
 } from "./payment.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Public Webhook (MUST be before authMiddleware)
+router.post("/razorpay/webhook", handleRazorpayWebhook);
 
 router.use(authMiddleware);
 

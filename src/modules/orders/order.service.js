@@ -3,18 +3,90 @@ import cartService from "../cart/cart.service.js";
 import Product from "../products/product.model.js";
 import inventoryService from "../inventory/inventory.service.js";
 import deliveryService from "../delivery/delivery.service.js";
+import * as paymentService from "../payments/payment.service.js";
+import * as smsService from "../notifications/sms.service.js";
+import User from "../users/user.model.js";
 import AppError from "../../utils/AppError.js";
+
+const GST_RATE = 0.05; // 5% GST
+const FREE_DELIVERY_THRESHOLD = 500;
+const STANDARD_DELIVERY_CHARGE = 49;
+
+/**
+ * Calculates taxable amount and GST from a GST-inclusive price
+ */
+const reverseGst = (inclusivePrice, rate) => {
+    const taxable = inclusivePrice / (1 + rate);
+    const gst = inclusivePrice - taxable;
+    return {
+        taxable: Math.round(taxable * 100) / 100,
+        gst: Math.round(gst * 100) / 100
+    };
+};
+
+/**
+ * Generates next sequential order number: SO-YYMMDD-XXX
+ */
+const generateOrderNumber = async () => {
+    const today = new Date();
+    const datePart = today.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
+
+    const lastOrder = await Order.findOne({ orderNumber: new RegExp(`^SO-${datePart}-`) })
+        .sort({ createdAt: -1 });
+
+    let sequence = 1;
+    if (lastOrder && lastOrder.orderNumber) {
+        const parts = lastOrder.orderNumber.split("-");
+        if (parts.length === 3) {
+            sequence = parseInt(parts[2], 10) + 1;
+        }
+    }
+
+    return `SO-${datePart}-${sequence.toString().padStart(3, "0")}`;
+};
+
+/**
+ * Generates next sequential invoice number: FY2025-26/XXXX
+ */
+export const generateInvoiceNumber = async () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+
+    let fyStart, fyEnd;
+    if (month >= 4) {
+        fyStart = year;
+        fyEnd = (year + 1).toString().slice(-2);
+    } else {
+        fyStart = year - 1;
+        fyEnd = year.toString().slice(-2);
+    }
+    const fy = `FY${fyStart}-${fyEnd}`;
+
+    const lastOrder = await Order.findOne({ invoiceNumber: new RegExp(`^${fy}/`) })
+        .sort({ createdAt: -1 });
+
+    let sequence = 1;
+    if (lastOrder && lastOrder.invoiceNumber) {
+        const parts = lastOrder.invoiceNumber.split("/");
+        if (parts.length === 2) {
+            sequence = parseInt(parts[1], 10) + 1;
+        }
+    }
+
+    return `${fy}/${sequence.toString().padStart(4, "0")}`;
+};
 
 export const createOrder = async (userId, orderData) => {
     console.log("DEBUG: Service createOrder - userId:", userId);
+
     // 1. Get user's cart
     const cart = await cartService.getCartByUser(userId);
-
     if (!cart || cart.items.length === 0) {
         throw new Error("Cart is empty");
     }
 
-    // 1.1 Validate Delivery Availability for Pincode
+    // 1.1 Validate Delivery Availability
     const pincode = orderData.shippingAddress.pincode;
     const deliveryIssues = await deliveryService.validateCheckoutAvailability(
         cart.items.map(item => ({ productId: item.product })),
@@ -25,31 +97,49 @@ export const createOrder = async (userId, orderData) => {
         throw new AppError(400, `Some items are not deliverable to ${pincode}: ${deliveryIssues.map(i => i.message).join(', ')}`);
     }
 
-    // 2. Create order items from cart and validate stock
+    // 2. Prepare Financials and Order Items
     const orderItems = [];
     const bulkEnvOperations = [];
 
+    let subTotal = 0;
+    let taxableSubTotal = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+
     for (const item of cart.items) {
         const product = await Product.findById(item.product);
-        if (!product) throw new Error(`Product not found for item ${item.variantLabel}`);
+        if (!product) throw new Error(`Product not found`);
 
         const variant = product.variants.find(v => v._id.toString() === item.variantId.toString());
-        if (!variant) throw new Error(`Variant not found for item ${item.variantLabel}`);
+        if (!variant) throw new Error(`Variant not found`);
 
         if (variant.stock < item.quantity) {
-            throw new Error(`Insufficient stock for ${product.name} (${variant.label})`);
+            throw new Error(`Insufficient stock for ${product.name}`);
         }
+
+        // Financials per item
+        const itemPrice = item.price; // This is the inclusive price
+        const { taxable, gst } = reverseGst(itemPrice, GST_RATE);
+        const cgst = Math.round((gst / 2) * 100) / 100;
+        const sgst = Math.round((gst / 2) * 100) / 100;
 
         orderItems.push({
             product: item.product,
             variant: item.variantId,
             name: item.variantLabel,
-            price: item.price,
+            price: itemPrice,
             quantity: item.quantity,
-            total: item.price * item.quantity
+            taxableAmount: taxable * item.quantity,
+            cgst: cgst * item.quantity,
+            sgst: sgst * item.quantity,
+            total: itemPrice * item.quantity
         });
 
-        // Prepare bulk update operation to decrement stock
+        subTotal += itemPrice * item.quantity;
+        taxableSubTotal += taxable * item.quantity;
+        totalCgst += cgst * item.quantity;
+        totalSgst += sgst * item.quantity;
+
         bulkEnvOperations.push({
             updateOne: {
                 filter: { _id: product._id, "variants._id": variant._id },
@@ -58,41 +148,35 @@ export const createOrder = async (userId, orderData) => {
         });
     }
 
-    // 3. Calculate total amount
-    const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+    // 3. Delivery Charge and Grand Total
+    const deliveryCharge = subTotal < FREE_DELIVERY_THRESHOLD ? STANDARD_DELIVERY_CHARGE : 0;
+    const totalAmount = subTotal + deliveryCharge;
+    const totalTax = totalCgst + totalSgst;
 
-    // Sanitize shipping address
-    const { _id, isDefault, ...shippingDetails } = orderData.shippingAddress;
+    // 4. Generate Order Number
+    const orderNumber = await generateOrderNumber();
 
-    // 4. Create Order
+    // 5. Create Order
     const order = new Order({
+        orderNumber,
         user: userId,
         items: orderItems,
+        subTotal,
+        taxableSubTotal,
+        totalTax,
+        cgst: totalCgst,
+        sgst: totalSgst,
+        deliveryCharge,
         totalAmount,
-        shippingAddress: {
-            name: shippingDetails.name,
-            phone: shippingDetails.phone,
-            addressLine1: shippingDetails.addressLine1,
-            city: shippingDetails.city,
-            state: shippingDetails.state,
-            pincode: shippingDetails.pincode
-        },
+        shippingAddress: orderData.shippingAddress,
         paymentMethod: orderData.paymentMethod,
-        history: [
-            {
-                status: "PENDING",
-                note: "Order Placed",
-                timestamp: new Date()
-            }
-        ]
+        history: [{ status: "PENDING", note: "Order Placed" }]
     });
 
-    await order.save(); // Save order first
+    await order.save();
 
-    // 5. Decrement Stock and Log Transactions
+    // 6. Update Inventory
     await Product.bulkWrite(bulkEnvOperations);
-
-    // Log Inventory Transactions
     for (const item of orderItems) {
         await inventoryService.logTransaction({
             product: item.product,
@@ -100,14 +184,23 @@ export const createOrder = async (userId, orderData) => {
             variantLabel: item.name,
             type: "OUT",
             quantity: item.quantity,
-            reason: `Order #${order._id}`,
+            reason: `Order #${orderNumber}`,
             referenceId: order._id.toString(),
             performedBy: userId
         });
     }
 
-    // 6. Clear Cart
+    // 7. Clear Cart
     await cartService.clearCart(userId);
+
+    // 8. If Online, initiate Razorpay order
+    if (order.paymentMethod === "ONLINE") {
+        const razorpayOrder = await paymentService.createRazorpayOrder(order._id);
+        return {
+            order,
+            razorpayOrder
+        };
+    }
 
     return order;
 };
