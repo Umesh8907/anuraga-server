@@ -13,6 +13,9 @@ build
 # Misc
 .DS_Store
 .env*
+!.env
+!.env.dev
+!.env.local
 
 # Logs
 npm-debug.log*
