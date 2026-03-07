@@ -1,9 +1,9 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
 import compression from "compression";
-import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+import morgan from "morgan";
 import limitMiddleware from "../middlewares/rateLimit.middleware.js";
 
 import env from "../config/env.js";
@@ -33,9 +33,9 @@ const expressLoader = (app) => {
         })
     );
 
-    // HTTP request logging
-    if (env.NODE_ENV === "development") {
-        app.use(morgan("dev"));
+    // HTTP request logging (env-aware)
+    if (!env.isTest && env.LOG_LEVEL !== "silent") {
+        app.use(morgan(env.LOG_LEVEL));
     }
 
     return app;

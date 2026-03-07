@@ -12,8 +12,13 @@ build
 
 # Misc
 .DS_Store
+
+# Environment files — never commit real secrets
 .env
 .env.local
+.env.dev
+.env.test
+.env.prod
 .env.development.local
 .env.test.local
 .env.production.local

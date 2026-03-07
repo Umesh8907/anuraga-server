@@ -1,0 +1,41 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules
+npm-debug.log*
+
+# ── Environment / secrets (NEVER bake into image) ─────────────
+.env
+.env.local
+.env.dev
+.env.test
+.env.prod
+.env.*
+
+# ── Dev tooling ───────────────────────────────────────────────
+.eslintrc.cjs
+.prettierrc
+nodemon.json
+
+# ── Docs & scripts (not needed at runtime) ────────────────────
+README.md
+docs
+scripts
+
+# ── Version control ───────────────────────────────────────────
+.git
+.gitignore
+
+# ── Editor / OS artefacts ─────────────────────────────────────
+.DS_Store
+.idea
+.vscode
+*.suo
+*.sw?
+
+# ── Logs ──────────────────────────────────────────────────────
+logs
+*.log
+
+# ── CI / test artefacts ───────────────────────────────────────
+coverage
+dist
+build

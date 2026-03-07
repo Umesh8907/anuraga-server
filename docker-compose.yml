@@ -1,0 +1,61 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+# Anuraga Server — Local Docker Compose
+#
+# Usage:
+#   docker-compose up --build          # start everything
+#   docker-compose down -v             # stop & remove volumes
+#   docker-compose up mongodb          # start only MongoDB
+# ─────────────────────────────────────────────────────────────
+
+services:
+  # ── MongoDB ─────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: anuraga-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: anuraga_local
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping').ok", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Anuraga Server ──────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: local
+    container_name: anuraga-server
+    restart: unless-stopped
+    env_file:
+      - .env.local                   # Mount your local env file
+    environment:
+      # Override the DB host to use the Docker service name
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/anuraga_local?authSource=admin
+    ports:
+      - "4000:4000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  mongo_data:
+    name: anuraga_mongo_data
