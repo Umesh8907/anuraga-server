@@ -7,6 +7,8 @@ import {
     updateAddress,
     deleteAddress
 } from "./user.controller.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import { addressSchema, updateAddressSchema } from "./user.validation.js";
 
 const router = Router();
 
@@ -65,7 +67,7 @@ router.put("/me", updateProfile);
  *       200:
  *         description: Address added
  */
-router.post("/addresses", addAddress);
+router.post("/addresses", validate(addressSchema), addAddress);
 
 /**
  * @openapi
@@ -112,7 +114,7 @@ router.post("/addresses", addAddress);
  *       200:
  *         description: Address deleted
  */
-router.put("/addresses/:addressId", updateAddress);
+router.put("/addresses/:addressId", validate(updateAddressSchema), updateAddress);
 router.delete("/addresses/:addressId", deleteAddress);
 
 export default router;
