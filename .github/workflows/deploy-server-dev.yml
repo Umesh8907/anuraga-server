@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - dev
-    paths:
-      - 'anuraga-server/**'
-      - '.github/workflows/deploy-server-dev.yml'
 
 jobs:
   build-and-push:
@@ -26,7 +23,7 @@ jobs:
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./anuraga-server
+          context: .
           push: true
           tags: registry.pocapi.in/anuraga-server:dev
 
